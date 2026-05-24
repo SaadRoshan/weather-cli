@@ -6,6 +6,7 @@ load_dotenv()
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
+FORECAST_URL = "http://api.openweathermap.org/data/2.5/forecast"
 
 def get_weather(city):
     params = {
@@ -14,6 +15,16 @@ def get_weather(city):
         "units": "metric"
     }
     response = requests.get(BASE_URL, params=params)
+    return response.json()
+
+def get_forecast(city):
+    params = {
+        "q": city,
+        "appid": API_KEY,
+        "units": "metric",
+        "cnt": 5
+    }
+    response = requests.get(FORECAST_URL, params=params)
     return response.json()
 
 def display_weather(data):
@@ -39,8 +50,26 @@ def display_weather(data):
     print(f"  Humidity    : {humidity}%")
     print(f"  Wind speed  : {wind} km/h")
     print("=" * 35)
-    print()
+
+def display_forecast(data):
+    if data.get("cod") != "200":
+        print(f"\n  Error: {data.get('message')}")
+        return
+
+    print("\n  5-Step Forecast:")
+    print("-" * 35)
+    for item in data["list"]:
+        time = item["dt_txt"]
+        temp = item["main"]["temp"]
+        condition = item["weather"][0]["description"].title()
+        print(f"  {time}  |  {temp}°C  |  {condition}")
+    print("-" * 35)
 
 city = input("Enter city name: ")
 data = get_weather(city)
 display_weather(data)
+
+show_forecast = input("\nShow forecast? (y/n): ")
+if show_forecast.lower() == "y":
+    forecast = get_forecast(city)
+    display_forecast(forecast)
